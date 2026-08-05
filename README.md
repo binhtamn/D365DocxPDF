@@ -31,25 +31,3 @@ The goal is to demonstrate practical, maintainable approaches you can use in D36
 Notes:
 - Exact deployment and configuration steps depend on how you structure your model and the target environment. Treat the samples as patterns to adapt, not turnkey production code.
 
-## Examples
-See the code and sample jobs in this repository for concrete patterns. (If you don't see an examples folder, check the X++ classes and jobs included in the project.)
-
-## Usage
-Below are illustrative assets showing the DOCX → PDF conversion flow. These are visual guides — replace them with real screenshots or GIFs from your environment for a more accurate walkthrough.
-
-![Usage screenshot](assets/usage-screenshot.svg)
-
-![Conversion flow diagram](assets/conversion-flow.svg)
-
-- The first image is a placeholder 'screenshot' showing a generated DOCX and resulting PDF.
-- The second image is a small flow diagram describing: D365 X++ -> Generate DOCX -> Convert to PDF -> Store/Deliver.
-
-To replace these with real screenshots or an animated GIF:
-1. Add your images to the `assets/` directory (e.g., `assets/screenshot.png` and `assets/convert.gif`).
-2. Update the README image links above to point to the new filenames.
-
-## Contributing
-Contributions, issues, and pull requests are welcome. Please open an issue to discuss major changes before creating a pull request. Follow repository coding conventions and include tests or usage notes where applicable.
-
-## License
-See the LICENSE file in this repository for license details.
