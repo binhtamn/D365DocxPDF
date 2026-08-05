@@ -1,0 +1,107 @@
+using System.IO;
+using DocumentFormat.OpenXml;
+using DocumentFormat.OpenXml.Packaging;
+using DocumentFormat.OpenXml.Wordprocessing;
+using DC = Microsoft.Dynamics365.LocalizationFramework.Services.DocumentConversion;
+
+/// <summary>
+/// Service class for generating Word documents (.docx) and converting to PDF via Open XML SDK in D365FO.
+/// </summary>
+class DocxGenerationService
+{
+    /// <summary>
+    /// Helper method to append OpenXml child nodes safely via .NET Reflection.
+    /// </summary>
+    private static void appendNode(OpenXmlCompositeElement _parent, OpenXmlElement _child)
+    {
+        System.Type openXmlType = System.Type::GetType("DocumentFormat.OpenXml.OpenXmlElement, DocumentFormat.OpenXml");
+        System.Reflection.MethodInfo methodInfo = openXmlType.GetMethod("AppendChild");
+        
+        System.Type childType = _child.GetType();
+        System.Reflection.MethodInfo genericMethod = methodInfo.MakeGenericMethod(childType);
+        
+        System.Type objType = System.Type::GetType("System.Object");
+        System.Array paramArray = System.Array::CreateInstance(objType, 1);
+        paramArray.SetValue(_child, 0);
+        
+        genericMethod.Invoke(_parent, paramArray);
+    }
+
+    /// <summary>
+    /// Generates a simple DOCX file, optionally converts it to PDF, and triggers user browser download.
+    /// </summary>
+    /// <param name = "_convertToPdf">If true, converts the generated DOCX to PDF before downloading.</param>
+    public static void generateAndDownloadDocx(boolean _convertToPdf = false)
+    {
+        MemoryStream stream = new MemoryStream();
+
+        // 1. Initialize WordprocessingDocument package in MemoryStream
+        using (WordprocessingDocument wordDoc = WordprocessingDocument::Create(stream, WordprocessingDocumentType::Document))
+        {
+            MainDocumentPart mainPart = wordDoc.AddMainDocumentPart();
+            
+            Document doc = new Document();
+            Body body = new Body();
+
+            // --- Header / Title Paragraph ---
+            Paragraph titlePara = new Paragraph();
+            Run titleRun = new Run();
+
+            RunProperties titleProps = new RunProperties();
+            DocxGenerationService::appendNode(titleProps, new Bold());
+            
+            FontSize titleSize = new FontSize();
+            titleSize.set_Val("36"); // Font size in half-points (36 = 18pt font)
+            DocxGenerationService::appendNode(titleProps, titleSize);
+
+            Text titleText = new Text();
+            titleText.set_Text("Document Generated from X++");
+
+            DocxGenerationService::appendNode(titleRun, titleProps);
+            DocxGenerationService::appendNode(titleRun, titleText);
+
+            DocxGenerationService::appendNode(titlePara, titleRun);
+            DocxGenerationService::appendNode(body, titlePara);
+
+            // --- Body Content Paragraph ---
+            Paragraph bodyPara = new Paragraph();
+            Run bodyRun = new Run();
+
+            Text bodyText = new Text();
+            bodyText.set_Text("Hello! This is a simple Word document created using X++ and Open XML SDK in D365FO.");
+
+            DocxGenerationService::appendNode(bodyRun, bodyText);
+            DocxGenerationService::appendNode(bodyPara, bodyRun);
+            DocxGenerationService::appendNode(body, bodyPara);
+
+            // --- Attach Body to Document & Save MainPart ---
+            DocxGenerationService::appendNode(doc, body);
+            mainPart.Document = doc;
+            mainPart.Document.Save();
+        }
+
+        // 2. Reset stream position to the beginning
+        stream.Position = 0;
+
+        // 3. Option A: Convert generated DOCX stream to PDF
+        if (_convertToPdf)
+        {
+            System.Guid _guid = System.Guid::NewGuid();
+            var pdfstream = DC.Pdf.ConvertToPdf::Convert(
+                ".docx",
+                stream,
+                _guid
+            );
+
+            var streamToPrint = pdfstream.ResultStream;
+
+            // Send PDF directly to user for browser download (explicitly fully qualified)
+            Dynamics.AX.Application.File::SendFileToUser(streamToPrint, "SampleDocument.pdf");
+        }
+        // 3. Option B: Send original DOCX stream directly to user
+        else
+        {
+            Dynamics.AX.Application.File::SendFileToUser(stream, "SampleDocument.docx");
+        }
+    }
+}
